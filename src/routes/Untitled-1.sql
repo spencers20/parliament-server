@@ -1,0 +1,96 @@
+-- ============================================================
+-- COMMITTEE STAGE VOTING — Schema additions
+-- Adds to the existing parliament DB (does not touch existing tables)
+-- ============================================================
+
+-- Clauses belonging to a bill
+-- CREATE TABLE IF NOT EXISTS app.clauses (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   bill_id UUID NOT NULL REFERENCES app.bills(_id) ON DELETE CASCADE,
+--   number TEXT NOT NULL,                -- e.g. "1", "2", "7"
+--   title TEXT NOT NULL,
+--   text TEXT NOT NULL,
+--   type TEXT NOT NULL DEFAULT 'original'
+--     CHECK (type IN ('original', 'new')), -- 'original' = en-bloc eligible, 'new' = voted separately
+--   status TEXT NOT NULL DEFAULT 'not_voted'
+--     CHECK (status IN ('not_voted', 'passed', 'failed', 'pending')),
+--   proposed_by UUID , -- only set for 'new' clauses /can be from committee / senators
+--   order_index INTEGER NOT NULL DEFAULT 0,   -- display/processing order
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   UNIQUE (bill_id, number)
+-- );
+
+-- Amendments belonging to a clause
+-- CREATE TABLE IF NOT EXISTS amendments (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   clause_id UUID NOT NULL REFERENCES clauses(id) ON DELETE CASCADE,
+--   bill_id UUID NOT NULL REFERENCES bills(id) ON DELETE CASCADE,
+-- --   preview TEXT NOT NULL,              -- short summary shown in list
+--   proposed_change TEXT NOT NULL,      -- full text of the change
+--   justification TEXT,
+--   proposed_by UUID REFERENCES senators(id),
+--   author_name TEXT NOT NULL,          -- denormalized for display
+--   status TEXT NOT NULL DEFAULT 'pending'
+--     CHECK (status IN ('pending', 'passed', 'failed')),
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+-- ALTER TABLE app.amendments
+-- ADD COLUMN clause_id UUID;
+
+-- ALTER TABLE app.amendments
+-- ADD CONSTRAINT amendments_clause_fkey
+-- FOREIGN KEY (clause_id)
+-- REFERENCES app.clauses(id);
+
+-- -- Committee voting sessions (one per item being voted on)
+-- -- item_type tells us what's being voted: amendment | clause | en_bloc | new_clause
+-- CREATE TABLE IF NOT EXISTS app.committee_voting_sessions (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   bill_id UUID NOT NULL REFERENCES app.bills(_id) ON DELETE CASCADE,
+--   item_type TEXT NOT NULL
+--     CHECK (item_type IN ('amendment', 'clause', 'en_bloc', 'new_clause')),
+--   -- For amendment votes:
+--   amendment_id UUID REFERENCES app.amendments(_id),
+--   -- For single clause or new clause votes:
+--   clause_id UUID REFERENCES app.clauses(id),
+--   -- For en_bloc votes (array of clause IDs voted together):
+--   en_bloc_clause_ids UUID[],
+--   status TEXT NOT NULL DEFAULT 'pending'
+--     CHECK (status IN ('pending', 'open', 'closed')),
+--   opened_by UUID NOT NULL REFERENCES app.profile(_id),
+--   opened_at TIMESTAMPTZ,
+--   closed_at TIMESTAMPTZ,
+--   total_accept  INTEGER NOT NULL DEFAULT 0,
+--   total_reject  INTEGER NOT NULL DEFAULT 0,
+--   total_abstain INTEGER NOT NULL DEFAULT 0,
+--   passed BOOLEAN,                     -- set on close
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+
+-- -- Individual senator votes for committee stage (audit trail)
+-- CREATE TABLE IF NOT EXISTS app.committee_votes (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   session_id UUID NOT NULL REFERENCES app.committee_voting_sessions(id) ON DELETE CASCADE,
+--   senator_id UUID NOT NULL REFERENCES app.profile(_id),
+--   bill_id UUID NOT NULL REFERENCES app.bills(_id),
+--   item_type TEXT NOT NULL
+--     CHECK (item_type IN ('amendment', 'clause', 'en_bloc', 'new_clause')),
+--   choice TEXT NOT NULL CHECK (choice IN ('accept', 'reject', 'abstain')),
+--   voted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   UNIQUE (session_id, senator_id)     -- one vote per senator per session
+-- );
+
+-- Indexes
+-- CREATE INDEX IF NOT EXISTS idx_clauses_bill        ON app.clauses(bill_id);
+-- CREATE INDEX IF NOT EXISTS idx_clauses_type        ON app.clauses(type);
+-- CREATE INDEX IF NOT EXISTS idx_clauses_status      ON app.clauses(status);
+-- CREATE INDEX IF NOT EXISTS idx_amendments_clause   ON app.amendments(clause_id);
+-- CREATE INDEX IF NOT EXISTS idx_amendments_bill     ON app.amendments(bill);
+-- CREATE INDEX IF NOT EXISTS idx_amendments_status   ON app.amendments(status);
+-- CREATE INDEX IF NOT EXISTS idx_comm_sessions_bill  ON app.committee_voting_sessions(bill_id);
+-- CREATE INDEX IF NOT EXISTS idx_comm_sessions_status ON app.committee_voting_sessions(status);
+-- CREATE INDEX IF NOT EXISTS idx_comm_votes_session  ON app.committee_votes(session_id);
+-- CREATE INDEX IF NOT EXISTS idx_comm_votes_senator  ON app.committee_votes(senator_id);
+
+
+SELECT * FROM app.profile

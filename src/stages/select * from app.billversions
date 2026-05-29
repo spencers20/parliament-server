@@ -1,0 +1,17 @@
+-- ============================================================
+-- NOTIFICATIONS — Schema
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS app.notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender_id UUID REFERENCES app.profile(_id) ON DELETE SET NULL,  -- NULL = system notification
+  receiver_id UUID NOT NULL REFERENCES app.profile(_id) ON DELETE CASCADE,
+  type TEXT
+  message TEXT NOT NULL,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_receiver    ON app.notifications(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_receiver_read ON app.notifications(receiver_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at  ON app.notifications(created_at DESC);
