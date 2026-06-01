@@ -261,14 +261,22 @@ export async function closeVotingSession(
 
     await client.query('COMMIT');
     await stageactions.completestage(session.stage)
+    await stageactions.totalcompleteaction(session.stage)
      const track=new tracking(session.bill_id,speakerId,session.stage)
      await track.audit(bill_version,'Speaker closed voting, ')
      if(nextstage){
       await stageactions.startstage(nextstage)
       await stageactions.totalstartaction(nextstage)
     }
+    
      const stagedata=await Fetch.specificstage(session.stage)
      const billdata=await Fetch.specificbill(session.bill_id)
+     if (stagedata.name === 'Third Reading') {
+  await db.query(
+    `UPDATE app.bills SET status = 'passed' WHERE _id = $1`,
+    [session.bill_id]
+  );
+}
     await track.audit(billdata.versionid,`The Speaker officially closing voting for the ${stagedata.name} stage.`)
     const all_ids=await Fetch.allprofile()
             

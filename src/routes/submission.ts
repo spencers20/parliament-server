@@ -87,6 +87,7 @@ router.get('/:billId/:stage/stats', asyncHandler(async (req, res) => {
     const stage = Array.isArray(req.params.stage)
       ? req.params.stage[0]
       : req.params.stage;
+      console.log('stage...',stage)
   const stats = await getSubmissionStats(billId, stage);
   res.json(stats);
 }));

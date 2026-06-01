@@ -69,7 +69,7 @@ export async function notifMany(
 
   // Fetch the inserted rows to push via socket
   const inserted = await db.query<Notification>(
-    `SELECT * FROM notifications
+    `SELECT * FROM app.notifications
      WHERE receiver_id = ANY($1)
        AND message = $2
        AND created_at >= NOW() - INTERVAL '5 seconds'

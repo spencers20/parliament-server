@@ -9,9 +9,9 @@ export class FirstReading{
     static async clerkreading(bill:any,stage:any,userid:any){
         const tracker=new tracking(bill.id,userid,stage.id)
         const stageactions=new StageActions()
-        await tracker.audit(bill.version,`The clerk read the bill for the first time `)
         await stageactions.completeaction(stage.actionnow)
         await stageactions.startaction(stage.nextaction)
+        await tracker.audit(bill.version,`The clerk read the bill for the first time `)
 
     }
     
@@ -29,7 +29,7 @@ export class FirstReading{
         await tracker.audit(bill.version,`The speaker assigned the bill to ${committee.name} committee for committee stage`)
         const billdata=await Fetch.specificbill(bill.id)
             // const comdata=await Fetch.specificcommittee(committeeId)
-        const stagedata=await Fetch.specificcommittee(stage)
+        const stagedata=await Fetch.specificstage(stage)
         // const receiverId = result.rows[0]._id
         await notif(
                 null,
@@ -50,6 +50,8 @@ export class FirstReading{
             // )
            
         await stageactions.completeaction(stage.actionnow)
+        const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        await stageactions.stagedeadline(stage.next,in30Days)
         await stageactions.completestage(stage.id)
         await stageactions.startstage(stage.next)
         await stageactions.startaction(stage.nextaction)

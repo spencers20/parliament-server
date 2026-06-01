@@ -3,7 +3,7 @@ import cors from 'cors'
 import user from "./routes/user" ;
 import stages from "./routes/billstages"
 import cron from 'node-cron'
-import { db } from "./database/db";
+import { db, startdbListener } from "./database/db";
 import { timedStages } from "./stages/time_stages";
 import { Authmiddleware } from "./auth/middleware";
 import multer from "multer";
@@ -69,45 +69,109 @@ setupSocketIO(server);
 
 
 const upload=multer({storage:multer.memoryStorage()})
+let isRunning = false;
+//     cron.schedule('* * * * *',
+//         async()=>{
+//             console.log('RUNNING CRON JOB.....')
+//             if (isRunning) {
+//              console.warn('Previous cron still running, skipping...');
+//               return;
+//             }
+//              isRunning = true;
+//         try{
+            
+//             const {rows}=await db.query(
+//                 `SELECT * FROM app.stages WHERE status='current' AND deadline_date::date=CURRENT_DATE`
+//             )
+//             for (const stage of rows){
+//             console.log('completed_stages...',stage)
+//             await timedStages(stage,'complete')
+//             const stagedata=await Fetch.stages(stage.bill)
+//             const billdata=await Fetch.specificbill(stage.bill)
+//             io.to(stage.bill).emit(
+//                 "stage_updated",stagedata
+//                 )
+//             io.to(stage.bill).emit(
+//                 "bill_updated",billdata
+//                 )
+//             }
 
-    cron.schedule('0 6 * * *',
-        async()=>{
-        try{
-            console.log('RUNNING CRON JOB.....')
-            const {rows}=await db.query(
-                `SELECT * FROM app.stages WHERE status='current' AND deadline_date::date=CURRENT_DATE`
-            )
-            for (const stage of rows){
-            console.log('completed_stages...',stage)
-            await timedStages(stage,'complete')
-            const stagedata=await Fetch.stages(stage.bill)
-            const billdata=await Fetch.specificbill(stage.bill)
-            io.to(stage.bill).emit(
-                "stage_updated",stagedata
-                )
-            io.to(stage.bill).emit(
-                "bill_updated",billdata
-                )
-            }
-
-        const startstage=await db.query(
+//         const startstage=await db.query(
            
-            `SELECT * FROM app.stages WHERE status='pending' AND starting_date::date=CURRENT_DATE`
-        )
-        for (const stage of startstage.rows){
-             console.log('starting...',stage)
-            await timedStages(stage,'start')
-        }
+//             `SELECT * FROM app.stages WHERE status='pending' AND starting_date::date=CURRENT_DATE`
+//         )
+//         for (const stage of startstage.rows){
+//              console.log('starting...',stage)
+//             await timedStages(stage,'start')
+//         }
 
-    }catch(e){
-        console.log('error in crone scheduling...',e)
-    }
-},
-{
-    timezone: "Africa/Nairobi",
-  }
+//     }catch(e){
+//         console.log('error in crone scheduling...',e)
+//     }finally {
+//     isRunning = false;
+//   }
+// },
+// {
+//     timezone: "Africa/Nairobi",
+//   }
         
-)
+// )
+
+const INTERVAL_MS = 1 * 60 * 1000; // 3 minute
+
+const runJob = async () => {
+  if (isRunning) {
+    console.warn('Previous job still running, skipping...');
+    return;
+  }
+
+  isRunning = true;
+  console.log('RUNNING SCHEDULED JOB.....');
+
+  try {
+    const { rows } = await db.query(
+      `SELECT * FROM app.stages WHERE status='current' AND deadline_date::date=CURRENT_DATE`
+    );
+
+    for (const stage of rows) {
+      console.log('completed_stages...', stage);
+      await timedStages(stage, 'complete');
+      const stagedata = await Fetch.stages(stage.bill);
+      const billdata = await Fetch.specificbill(stage.bill);
+      io.to(stage.bill).emit('stage_updated', stagedata);
+      io.to(stage.bill).emit('bill_updated', billdata);
+    }
+
+    const { rows: startRows } = await db.query(
+      `SELECT * FROM app.stages WHERE status='pending' AND starting_date::date=CURRENT_DATE`
+    );
+
+    for (const stage of startRows) {
+      console.log('starting...', stage);
+      await timedStages(stage, 'start');
+    }
+       const { rows: startactions } = await db.query(
+      `SELECT * FROM app.stage_actions WHERE status='pending' AND started_at::date=CURRENT_DATE`
+    );
+
+    for (const stage of startactions) {
+      console.log('starting...', stage);
+      await timedStages(stage, 'start','action');
+    }
+
+  } catch (e) {
+    console.error('Error in scheduled job:', e);
+  } finally {
+    isRunning = false;
+  }
+};
+
+// Run immediately on startup, then every minute
+runJob();
+ setInterval(runJob, INTERVAL_MS);
+
+// To stop it cleanly (e.g. on shutdown):
+// clearInterval(jobInterval);
 
 app.get('/',(req,res)=>{
     console.log('intro...')
@@ -144,8 +208,10 @@ app.post('/about_bill',Authmiddleware,upload.single('file'),async(req,res)=>{
 })
 
 try {
-    server.listen(3001, () => {
+    server.listen(3001, async () => {
         console.log('listening at: http://localhost:3001')
+        startdbListener().catch(console.error);
+
     }).on('error', (err) => {
         console.error('Server error:', err)
     })

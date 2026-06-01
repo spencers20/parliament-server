@@ -19,11 +19,12 @@ export class SecondReading{
         await stageactions.startfutureaction(nextaction,date)
         const stagedata=await Fetch.specificstage(stage_id)
         await tracker.audit(bill.version,`The Clerk set the ${stagedata.name} to ${stageactions.formatDate(new Date(date))}`)
-        const billdata=await Fetch.specificbill(bill.Id)
+        const billdata=await Fetch.specificbill(bill.id)
+        console.log('billdata..',billdata)
         const all_ids=await Fetch.allprofile()
         
         await notifMany(null,all_ids,
-            `${billdata.title}:: The bill has been set for  ${stagedata.name}on ${stageactions.formatDate(new Date(date))}  `
+            `${billdata?.title}:: The bill has been set for  ${stagedata.name}on ${stageactions.formatDate(new Date(date))}  `
         )
     }
 
@@ -33,7 +34,7 @@ export class SecondReading{
         const stagedata=await Fetch.specificstage(stage.id)
         await track.audit(bill.version,`The Speaker officially opened voting for the ${stagedata.name} stage.`)
         const all_ids=await Fetch.allprofile()
-        const billdata=await Fetch.specificbill(bill.Id)
+        const billdata=await Fetch.specificbill(bill.id)
         
         await notifMany(null,all_ids,
             `${billdata.title}:: The speaker has started voting on principles for the stage ${stagedata.name}}  `

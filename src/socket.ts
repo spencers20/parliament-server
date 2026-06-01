@@ -14,6 +14,8 @@
 
 import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer, Socket } from 'socket.io';
+import { db } from './database/db';
+import { Fetch } from './fetch/fetching';
 // import { WsEvent } from '../types/voting';
 
 let io: SocketIOServer;
@@ -145,6 +147,8 @@ export function notifyUser(userId: string, notification: object): void {
   if (!io) { console.warn('Socket.IO not initialised'); return; }
   io.to(`user:${userId}`).emit('NOTIFICATION', notification);
 }
+
+
 
 
 export { io };

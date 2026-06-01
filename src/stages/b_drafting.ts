@@ -5,6 +5,9 @@ import { killbill } from "../services/billdeath";
 import { StageController } from "./stage";
 import { notif } from "../services/notificationService";
 import { Fetch } from "../fetch/fetching";
+// import { addDays } from 'date-fns';
+
+// const in14Days = addDays(new Date(), 14);
 
 export class DraftingStage{
 
@@ -17,7 +20,8 @@ export class DraftingStage{
             await tracker.audit(versionId,'The speaker rejected the Proposed Bill')
             await tracker.audit(versionId,'The Proposed Bill died')
             await stageactions.completeaction(stage.actionnow)
-            await stageactions.completestage(stage.id)    
+            await stageactions.completestage(stage.id) 
+            return   
         }
 
         const now=new Date()
@@ -29,7 +33,8 @@ export class DraftingStage{
         )
         if (rowCount===0) throw new Error('assigning bill to committee failed')
         const billdata=await Fetch.specificbill(billId)
-        await tracker.audit(versionId,`The speaker assigned the bill to ${committee.name} committee`)
+        const commdata=await Fetch.specificcommittee(committee.id)
+        await tracker.audit(versionId,`The speaker assigned the bill to ${commdata.name} committee`)
          await notif(
                 user.id,
                 committee.id,
@@ -37,6 +42,9 @@ export class DraftingStage{
                 )
         await stageactions.completeaction(stage.actionnow)
         await stageactions.completestage(stage.id)
+        // const rnow = new Date();
+        const in14Days = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        await stageactions.stagedeadline(stage.next,in14Days)
         await stageactions.startstage(stage.next)
         await stageactions.startaction(stage.nextaction)
         

@@ -102,7 +102,7 @@ export class StageController{
       const tracker=new tracking(bill.id,userid,stage_id)
       await stageactions.stagefuture(stage_id,date)
       await tracker.audit(bill.version,`The Clerk set the first reading to ${new Date(date)}`)
-
+      res.status(200).json({success:true})
 
     }catch(e:any){
       res.status(500).json({error:e.message})

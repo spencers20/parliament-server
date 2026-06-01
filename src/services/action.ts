@@ -64,9 +64,13 @@ export class StageActions{
         console.log('completing action...',stage)
         const complete_res=await db.query(`
         UPDATE app.stage_actions 
-        SET status='completed',
-        performed_time=NOW()
-        WHERE stage=$1
+        SET 
+          status = 'completed',
+          performed_time = CASE 
+            WHEN performed_time IS NULL THEN NOW() 
+            ELSE performed_time 
+          END
+        WHERE stage = $1
         `,[stage]
        )
        if((complete_res.rowCount??0)===0) throw new Error(`Error in completing action ${stage}  `)

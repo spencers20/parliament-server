@@ -12,6 +12,7 @@ router.post('/setcomm_stage',async(req,res)=>{
       res.status(400).json({ error: 'bill_id, stage, and speaker_id are required' });
       return;
     }
+    console.log('setting on date..',stage)
 
     await Ammendments.startcommittee(bill,userid,stage,date)
     res.status(200).json({success:true})

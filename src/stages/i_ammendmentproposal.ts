@@ -17,7 +17,7 @@ export class Ammendments{
         //         if((settime.rowCount??0)===0) throw new Error('Error in starting stage')
 
           await tracker.audit(bill.version,`The Clerk set the Committee Stage  to ${stageactions.formatDate(new Date(date))}`)
-          const billdata=await Fetch.specificbill(bill.Id)
+          const billdata=await Fetch.specificbill(bill.id)
           const all_ids=await Fetch.allprofile()
                   
           await notifMany(null,all_ids,
@@ -55,7 +55,7 @@ export class Ammendments{
             // 4. Insert amendment
             const result = await client.query(
               `INSERT INTO app.amendments
-               (bill, proposer_uuid, stage, author, clause, change, justification, status, date)
+               (bill, proposer_uuid, stage, author, clause_id, change, justification, status, date)
                VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',NOW())
                RETURNING *`,
               [billid, user.id, stageid, user.name, ammendment.clause, ammendment.change, ammendment.justification]

@@ -379,6 +379,7 @@ export async function closeCommitteeSession(
     }
 
     if (session.item_type === 'en_bloc' && session.en_bloc_clause_ids?.length) {
+      console.log('checkiing ouyt......')
       // En bloc: if passed all pass, if failed all fail
       await client.query(
         `UPDATE app.clauses SET status = $1 WHERE id = ANY($2)`,

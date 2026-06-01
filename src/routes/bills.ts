@@ -21,6 +21,18 @@ router.post('/fetch_stages',async(req,res)=>{
     }
 })
 
+router.post('/fetch_bill',async(req,res)=>{
+    try{
+        const {billid}=req.body
+        console.log('bill id>>>>>',billid)
+        const data=await Fetch.specificbill(billid)
+        res.status(200).json(data)
+
+    }catch(e:any){
+        res.status(500).json({FETCHING_STAGES_ERROR:e.message})
+    }
+})
+
 router.get("/:billId/timeline", async (req, res) => {
   try {
     const { billId } = req.params;

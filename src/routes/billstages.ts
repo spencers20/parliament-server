@@ -43,7 +43,7 @@ router.post('/uploaddraft',Authmiddleware,upload.single('file'),async(req,res)=>
         const io=req.app.get('io')
         // const actionhandler=new ActionHandler('dls')
         const {billId,currentaction,nextaction,stage,userrole,userid,nextstageaction,nextstage}=req.body
-        console.log('user...',nextaction)
+        console.log('user...',billId)
         if(!nextaction) return
         // actionhandler.validate(userrole)
         
@@ -56,7 +56,26 @@ router.post('/uploaddraft',Authmiddleware,upload.single('file'),async(req,res)=>
         
 
         const file_url=await storeFile(file_buffer,fileName)
-        const response= await query_n8n(modelurl,file_url,fileName,undefined,'clause')
+      
+        const updatebill=await db.query(
+            `UPDATE app.bills 
+             SET bill=$1
+             WHERE _id=$2
+            `,
+            [file_url,billId]
+        )
+        if(updatebill.rowCount==0) throw new Error('Error updating bill')
+        const stagedata=await Fetch.specificstage(stage)
+         const versionId=await tracker.billversion(file_url)
+    if(stagedata.name==='Reprinting'){
+        await stageactions.completestage(stage)
+        await stageactions.totalcompleteaction(stage)
+        await stageactions.startaction(nextstageaction)
+        await stageactions.startstage(nextstage)
+        await tracker.audit(versionId,'The Directorate of Legislative Service uploaded the ammended Bill')
+         res.status(200).json({success:true})
+    }else{
+          const response= await query_n8n(modelurl,file_url,fileName,undefined,'clause')
         const clauses=await response[0]?.output?.clauses??await response[0]?.output
      // saving the clauses
         for (let clause of clauses){
@@ -67,26 +86,11 @@ router.post('/uploaddraft',Authmiddleware,upload.single('file'),async(req,res)=>
             )
 
         }
-        const updatebill=await db.query(
-            `UPDATE app.bills 
-             SET bill=$1
-             WHERE _id=$2
-            `,
-            [file_url,billId]
-        )
-        if(updatebill.rowCount==0) throw new Error('Error updating bill')
-        const stagedata=await Fetch.specificbill(stage)
-    if(stagedata.name==='Reprinting'){
-        await stageactions.completestage(stage)
-        await stageactions.totalcompleteaction(stage)
-        await stageactions.startaction(nextstageaction)
-        await stageactions.startstage(nextstage)
-    }else{
         await stageactions.completeaction(currentaction)
         await stageactions.startaction(nextaction)
     }
         const billdata=await Fetch.specificbill(billId)
-        const versionId=await tracker.billversion(file_url)
+   
         const clerkQuery = `
                 SELECT _id
                 FROM app.profile
@@ -112,6 +116,7 @@ router.post('/uploaddraft',Authmiddleware,upload.single('file'),async(req,res)=>
         io.to(billId).emit(
             "bill_updated",billdata
         )
+        res.status(200).json({success:true})
 
 
     }catch(e:any){
@@ -153,7 +158,7 @@ router.post('/approvedraft',Authmiddleware,async(req,res)=>{
             clerkId,
             `${billdata.title} Draft approved by sponsor forward it to the speaker`
             )}
-        tracker.audit(versionId,`${user.name} Accepted the Drafting version to proceed as is`)
+        tracker.audit(versionId,`Senator ${user.name} Accepted the Drafting version to proceed as is`)
         await stageactions.completeaction(currentaction)
         await stageactions.startaction(nextaction)
         const stagedata=await Fetch.stages(billId)

@@ -70,7 +70,7 @@ export async function hasAlreadySubmitted(
 
 export async function createSubmission(params: {
   billId: string;
-  stage: string;
+  stage: any;
   name?: string;
   category: SubmissionCategory;
   comment: string;

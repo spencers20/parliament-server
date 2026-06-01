@@ -34,7 +34,7 @@ export class Waiting{
         // set timeline for the waiting stage
         // start the waiting stage 
         await stageactions.startstage(stage.next)
-        const deadline=new Date(new Date().getTime() + (30*24*60*60*1000))
+        const deadline=new Date(new Date().getTime() + (0*24*60*60*1000))
         const settime=await db.query(`
             UPDATE app.stages 
             SET deadline_date=$1
@@ -44,7 +44,7 @@ export class Waiting{
         
         const billdata=await Fetch.specificbill(bill.Id)
             // const comdata=await Fetch.specificcommittee(committeeId)
-        const stagedata=await Fetch.specificcommittee(stage.id)
+        // const stagedata=await Fetch.specificcommittee(stage.id)
             // const receiverId = result.rows[0]._id
             // await notif(
             //     null,

@@ -22,7 +22,7 @@ export async function killbill(billId:string,reason:string,stage:string){
     if (rowCount===0) throw new Error ('error in killing bill')
     const billdata=await Fetch.specificbill(billId)
     // const comdata=await Fetch.specificcommittee(committeeId)
-    const stagedata=await Fetch.specificcommittee(stage)
+    const stagedata=await Fetch.specificstage(stage)
     // const receiverId = result.rows[0]._id
     // await notif(
     //     null,

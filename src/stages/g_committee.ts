@@ -3,6 +3,7 @@ import { tracking } from "../services/audit";
 import { storeFile } from "../services/store-file";
 import { StageActions } from "../services/action";
 import { Fetch } from "../fetch/fetching";
+import { notif } from "../services/notificationService";
 // import { killbill } from "./billdeath";
 
 
@@ -20,7 +21,7 @@ export class Scrutiny{
         if(rowCount===0) throw new Error('Error in storing the prescrutiny report')
         const billdata=await Fetch.specificbill(billid)
         
-        await tracker.audit(billdata.versionid,'The committee presents the report from the committee scrutiny stage ')
+        await tracker.audit(billdata.versionid,'The committee Advertises the bill for public participation')
         
     }
 
@@ -38,9 +39,26 @@ export class Scrutiny{
         if(rowCount===0) throw new Error('Error in storing the prescrutiny report')
             // notification to speaker
         console.log('tracking...')
+         const comdata=await Fetch.specificcommittee(committeeId)
         await tracker.audit(versionId,'The committee uploaded the committee stage report')
         await stageactions.completeaction(currentaction)
         await stageactions.startaction(nextaction)
+
+        const result = await db.query( `
+                        SELECT _id
+                        FROM app.profile
+                        WHERE role = 'speaker'
+                        `)
+        const billdata=await Fetch.specificbill(billid)
+        const stagedata=await Fetch.specificstage(stageid)
+              
+        if (result.rows.length > 0) {
+            const receiverId = result.rows[0]._id
+            await notif(
+            null,
+            receiverId,
+            `${billdata.title}:: ${comdata.name} Committee submitted the ${stagedata.name} report `
+            )}
 
     }
 //   committee reading report / more of committee making the report public

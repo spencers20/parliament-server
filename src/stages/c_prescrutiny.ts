@@ -20,14 +20,14 @@ export class Prescrutiny{
         )
         if(rowCount===0) throw new Error('Error in storing the prescrutiny report')
          await db.query(`
-            UPDATE  app.comm_bill SET completed_on=NOW() 
-            bill_id=$1 AND stage_id=$2
+            UPDATE  app.comm_bill SET completed_on=NOW()
+           WHERE bill_id=$1 AND stage_id=$2
             `,[billid,stageid]
         )
         
             // notification to speaker
-
-        await tracker.audit(versionId,'The committee submitted the prepublication scrutiny report')
+         const comdata=await Fetch.specificcommittee(committeeId)
+        await tracker.audit(versionId,`The ${comdata.name} committee submitted the prepublication scrutiny report`)
         await stageactions.completeaction(currentaction)
         await stageactions.startaction(nextaction)
       
@@ -37,8 +37,7 @@ export class Prescrutiny{
                         WHERE role = 'speaker'
                         `)
         const billdata=await Fetch.specificbill(billid)
-        const comdata=await Fetch.specificcommittee(committeeId)
-        const stagedata=await Fetch.specificcommittee(stageid)
+        const stagedata=await Fetch.specificstage(stageid)
       
         if (result.rows.length > 0) {
             const receiverId = result.rows[0]._id

@@ -17,10 +17,21 @@ router.post('/fetchbills',Authmiddleware,async(req,res)=>{
     await Fetch.committeebills(req,res)
 })
 
+router.post('/billstage',async(req,res)=>{
+  try{
+    const {billId}=req.body
+    const stage=await Fetch.specificbillstage(billId)
+    res.status(200).json(stage)
+
+  }catch(e){
+    console.log('error in getting bill stages ....',e)
+  }
+})
+
 // --COMMITTEE BILLS--
 
 router.post('/commbills',async(req,res)=>{
-  const {commId}=req.body
+  // const {commId}=req.body
 
   const bills=await db.query(`
     SELECT 
@@ -64,6 +75,19 @@ router.post('/fetch_stages',Authmiddleware,async(req,res)=>{
     }catch(e:any){
         res.status(500).json({FETCHING_STAGES_ERROR:e.message})
     }
+})
+
+router.post('/fetchreport',async(req,res)=>{
+  try{
+    const {stageId}=req.body
+    const report=await Fetch.committeereport(stageId)
+    res.status(200).json(report)
+
+
+  }catch(e){
+    console.log('error in finding report ',e)
+    return res.status(500).json({error:"error in fetching committee report"})
+  }
 })
 
 router.post('/prescrutinyreport',Authmiddleware,upload.single('file'),async(req,res)=>{

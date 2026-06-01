@@ -76,7 +76,7 @@ router.post('/requests', async (req, res) => {
     // Return invite tokens so the caller can construct links and send emails
 
     inviteRows.forEach(async (inv)=>{
-      const model_url='https://untawed-overheady-tony.ngrok-free.dev/webhook-test/4b60dc1a-9c58-46af-9366-6da6c4978f26'
+      const model_url='https://untawed-overheady-tony.ngrok-free.dev/webhook/4b60dc1a-9c58-46af-9366-6da6c4978f26'
       const data={
         email:inv.email,
         name: inv.name,
