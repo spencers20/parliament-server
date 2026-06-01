@@ -284,7 +284,7 @@ export async function closeVotingSession(
         `${billdata.title}:: The speaker has closed voting on principles for the stage ${stagedata.name}}  `
     )
 
-     await track.audit(bill_version,'Bill passed to the next stage due to more votin yes ')
+     await track.audit(bill_version, `Bill passed to The ${stagedata.name === 'Third Reading' ? 'National Assembly' : 'Next Stage'}: Majority Voted on the Bill`)
 
     const closedSession = closed.rows[0];
     const tally = {
