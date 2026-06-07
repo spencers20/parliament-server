@@ -11,6 +11,8 @@ import { Fetch } from '../fetch/fetching';
 import { notif } from '../services/notificationService';
 // import { db } from '../db'; // your existing pool
 
+const frontend='http://localhost:3000/'
+
 const router = Router();
 
 // ─────────────────────────────────────────────
@@ -80,7 +82,7 @@ router.post('/requests', async (req, res) => {
       const data={
         email:inv.email,
         name: inv.name,
-        reviewlink:`http://localhost:3000/stakeholders/${inv.token}`,
+        reviewlink:`${frontend}/stakeholders/${inv.token}`,
         subject,
         message
       }
@@ -98,7 +100,7 @@ router.post('/requests', async (req, res) => {
         name: inv.name,
         email: inv.email,
         token: inv.token,
-        review_link: `http://localhost:3000/stakeholders/${inv.token}`,
+        review_link: `${frontend}/stakeholders/${inv.token}`,
       })),
     });
   } catch (err) {

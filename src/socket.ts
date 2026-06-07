@@ -45,6 +45,12 @@ export function setupSocketIO(httpServer: HttpServer): SocketIOServer {
       socket.emit('session_joined', { session_id: sessionId });
     });
 
+    socket.on('join_user_room', (userId: string) => {
+  if (!userId || typeof userId !== 'string') return;
+  socket.join(`user:${userId}`);
+  console.log(`   ↳ ${socket.id} joined user room: user:${userId}`);
+});
+
 
 
 

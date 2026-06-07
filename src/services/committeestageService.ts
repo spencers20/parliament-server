@@ -414,7 +414,7 @@ export async function closeCommitteeSession(
     }
 
     if (billKilled) {
-      await client.query(`UPDATE app.bills SET status = 'failed' WHERE id = $1`, [session.bill_id]);
+      await client.query(`UPDATE app.bills SET status = 'failed' WHERE _id = $1`, [session.bill_id]);
     }
 
     await client.query('COMMIT');

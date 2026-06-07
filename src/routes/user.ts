@@ -9,7 +9,7 @@ dotenv.config()
 
 const authcontroller=new AuthController()
 
-router.post('/register',Authmiddleware,(req,res)=>authcontroller.reqister(req,res))
+router.post('/register',(req,res)=>authcontroller.reqister(req,res))
 router.post('/getuser',Authmiddleware,(req,res)=>authcontroller.getuser(req,res))
 router.post('/login',(req,res)=>authcontroller.login(req,res))
 router.post('/update',Authmiddleware,(req,res)=>authcontroller.update(req,res))

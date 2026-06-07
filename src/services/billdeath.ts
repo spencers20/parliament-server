@@ -1,11 +1,14 @@
 import { db } from "../database/db"
 import { Fetch } from "../fetch/fetching";
+import { StageActions } from "./action";
 import { tracking } from "./audit";
 import { notif, notifMany } from "./notificationService";
 
 export async function killbill(billId:string,reason:string,stage:string){
+    const stageactions = new StageActions()
     const client = await db.connect();
     const now=new Date()
+    stageactions.Killstage(stage)
     const {rowCount}=await db.query(`
             INSERT INTO app.deadbills(
             bill,reason,stage,date) 

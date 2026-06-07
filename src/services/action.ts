@@ -32,6 +32,19 @@ export class StageActions{
         return{success:true}
     }
 
+    async Killstage(stage:string){
+        const killedstage=await db.query(
+            ` UPDATE app.stages
+            SET status='failed',
+            completed_date=NOW()
+            WHERE _id=$1
+            `,[stage]
+        )
+        if((killedstage.rowCount??0)===0) throw new Error(`Error in completing  stage ${stage} `)
+
+        return{success:true}
+    }
+
     async startstage(stage:string,date?:any){
         const startdate=date?new Date(date):new Date()
         const startstage=await db.query(

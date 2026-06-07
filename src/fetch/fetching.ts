@@ -6,7 +6,7 @@ export class Fetch{
     static async bills(req:Request,res:Response){
         try{
             const {rows}=await db.query(`
-            SELECT 
+            SELECT DISTINCT ON (b._id)
   b.*,
   v._id AS versionid,
   p.name AS proposedBy,

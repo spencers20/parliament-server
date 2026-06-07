@@ -5,7 +5,7 @@ import { Fetch } from "../fetch/fetching";
 
 const router=Router()
 
-router.get('/fetch',Authmiddleware,async(req,res)=>{
+router.get('/fetch',async(req,res)=>{
     await Fetch.bills(req,res)
 })
 

@@ -52,7 +52,7 @@ export const billStages = [
       },
       {
         index: 4,
-        name: "Speaker approves pre-publication scrutiny",
+        name: "Speaker approves and Assigns relevant committee  for pre-publication scrutiny",
         responsibility: "speaker",
         status: "pending",
       },
@@ -67,13 +67,13 @@ export const billStages = [
     actions: [
       {
         index: 1,
-        name: "Committee uploads scrutiny report",
+        name: "The committee reviews the bill, gathers stakeholder views and technical input, and prepare a scrutiny report containing its findings and recommendations.",
         responsibility: "committee",
         status: "pending",
       },
       {
         index: 2,
-        name: "Speaker approves publication",
+        name: "The Speaker reviews and approves the committee report and authorizes the  draft for official publication.",
         responsibility: "speaker",
         status: "pending",
       },
@@ -124,7 +124,7 @@ export const billStages = [
       },
       {
         index: 2,
-        name: "Speaker assigns review committee",
+        name: "Speaker assigns relevant  committee for Committee Scrutiny",
         responsibility: "speaker",
         status: "pending",
       },
@@ -139,13 +139,13 @@ export const billStages = [
     actions: [
       {
         index: 1,
-        name: "Committee carries out deep scrutiny from public and stakeholders",
+        name: "Committee reviews the bill in detail, gathers public and stakeholder input, and prepares recommendations and amendments report.",
         responsibility: "committee",
         status: "pending",
       },
       {
         index: 2,
-        name: "Committee reads report",
+        name: "Committee presents report",
         responsibility: "committee",
         status: "pending",
       },

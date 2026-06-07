@@ -235,57 +235,41 @@ export async function closeVotingSession(
        RETURNING *`,
       [passed, sessionId]
     );
-
-    if (!passed){
-        await killbill(session.bill_id,'Most votes on decline',session.stage)
-        await stageactions.completestage(session.stage)
-        const track=new tracking(session.bill_id,speakerId,session.stage)
-        await track.audit(bill_version,'Speaker closed voting and the bill failed due to most votes decline')
-            }
-
-    // If this is third_reading and it failed, kill the bill
-    // if (session.stage === 'third_reading' && !passed) {
-    //   await client.query(
-    //     `UPDATE bills SET status = 'failed' WHERE id = $1`,
-    //     [session.bill_id]
-    //   );
-    // }
-
-    // If third_reading passed, mark bill as passed
-    // if (session.stage === 'third_reading' && passed) {
-    //   await client.query(
-    //     `UPDATE bills SET status = 'passed' WHERE id = $1`,
-    //     [session.bill_id]
-    //   );
-    // }
-
-    await client.query('COMMIT');
-    await stageactions.completestage(session.stage)
-    await stageactions.totalcompleteaction(session.stage)
-     const track=new tracking(session.bill_id,speakerId,session.stage)
-     await track.audit(bill_version,'Speaker closed voting, ')
-     if(nextstage){
-      await stageactions.startstage(nextstage)
-      await stageactions.totalstartaction(nextstage)
-    }
+    const stagedata=await Fetch.specificstage(session.stage)
+    const track=new tracking(session.bill_id,speakerId,session.stage)
+    const billdata=await Fetch.specificbill(session.bill_id)
     
-     const stagedata=await Fetch.specificstage(session.stage)
-     const billdata=await Fetch.specificbill(session.bill_id)
-     if (stagedata.name === 'Third Reading') {
-  await db.query(
-    `UPDATE app.bills SET status = 'passed' WHERE _id = $1`,
-    [session.bill_id]
-  );
-}
-    await track.audit(billdata.versionid,`The Speaker officially closing voting for the ${stagedata.name} stage.`)
-    const all_ids=await Fetch.allprofile()
-            
-    await notifMany(null,all_ids,
-        `${billdata.title}:: The speaker has closed voting on principles for the stage ${stagedata.name}}  `
-    )
+    if (!passed){
+      await killbill(session.bill_id,'Most votes on decline',session.stage)
+      await track.audit(billdata.versionid,`The Speaker officially closing voting for the ${stagedata.name} stage.`)
+      await track.audit(bill_version,'Speaker closed voting and the bill failed due to most votes decline')
+    }else{
+      await client.query('COMMIT');
+      await stageactions.completestage(session.stage)
+      await track.audit(bill_version,'Speaker closed voting, ')
+      if(nextstage){
+       await stageactions.startstage(nextstage)
+       await stageactions.totalstartaction(nextstage)
+     }
+     if (stagedata.name === 'Third Reading' && passed) {
+       await db.query(
+       `UPDATE app.bills SET status = 'passed' WHERE _id = $1`,
+     [session.bill_id]
+      );
+      
+      }
+      await track.audit(bill_version, `Bill passed to The ${stagedata.name === 'Third Reading' ? 'National Assembly' : 'Next Stage'}: Majority Voted on the Bill`)
+      const all_ids=await Fetch.allprofile()
+ 
+ 
+      await notifMany(null,all_ids,
+      `${billdata.title}:: The speaker has closed voting  for the stage ${stagedata.name}}  `
+      )
+    }
 
-     await track.audit(bill_version, `Bill passed to The ${stagedata.name === 'Third Reading' ? 'National Assembly' : 'Next Stage'}: Majority Voted on the Bill`)
 
+    await stageactions.totalcompleteaction(session.stage)
+     
     const closedSession = closed.rows[0];
     const tally = {
       accept: closedSession.total_accept,

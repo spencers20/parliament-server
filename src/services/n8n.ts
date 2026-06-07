@@ -13,12 +13,14 @@ async function fetchWithRetry(
 //   index: any,
   namespace?: string,
   clause?:boolean,
-  maxRetries = 3
+  maxRetries = 4
 ) {
   let lastError: Error | null = null;
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) 
+    {
     try {
+        console.log('to results,,,,',model_url)
       const result = await fetch(model_url, {
         method: 'POST',
         headers: {
@@ -26,6 +28,7 @@ async function fetchWithRetry(
         },
         body: JSON.stringify(data),
       });
+      console.log('N8n results,,,,',result)
 
       if (!result.ok) {
         const errorText = await result.text();

@@ -12,6 +12,7 @@ import { Fetch } from "../fetch/fetching";
 import { FirstReading } from "../stages/f_first_reading";
 import {SecondReading} from "../stages/h_secondreading"
 import { notif } from "../services/notificationService";
+import { killbill } from "../services/billdeath";
 // import { error } from "node:console";
 
 
@@ -32,6 +33,32 @@ router.post('/download',Authmiddleware,async(req,res)=>{
         res.status(200).json({success:true})
     }catch(e:any){
         console.log('error in updating bill download',e)
+        res.status(500).json({success:false, error:e.message})
+    }
+})
+
+router.post('/download',Authmiddleware,async(req,res)=>{
+    try{
+        const {billId,userId,stageId,user,versionId}=req.body
+        const tracker=new tracking(billId,userId,stageId)
+        tracker.audit(versionId,`${user} downloaded the proposal`)
+        res.status(200).json({success:true})
+    }catch(e:any){
+        console.log('error in updating bill download',e)
+        res.status(500).json({success:false, error:e.message})
+    }
+})
+
+router.post('/reject',async(req,res)=>{
+    try{
+        const {billId,userId,stageId,reason,versionId}=req.body
+        const tracker=new tracking(billId,userId,stageId)
+        const stagedata=await Fetch.specificstage(stageId)
+        await killbill(billId,`bill has been rejected during the ${stagedata.name} because ${reason}`,stageId)
+        tracker.audit(versionId,`Speaker rejected the bill with reason ${reason}`)
+        res.status(200).json({success:true})
+    }catch(e:any){
+        console.log('error in rejecting bill',e)
         res.status(500).json({success:false, error:e.message})
     }
 })
@@ -180,7 +207,7 @@ router.post('/forwarddraft',Authmiddleware,async(req,res)=>{
     try{
         console.log('forwardiing draft..')
         const io=req.app.get('io')
-        const {billId,stageId,user,versionId,currentaction,nextaction}=req.body
+        const {billId,stageId,user,versionId,currentaction,nextaction,comment}=req.body
         const actionhandler=new ActionHandler('clerk')
         actionhandler.validate(user.role)
         const stageactions=new StageActions()
@@ -196,7 +223,7 @@ router.post('/forwarddraft',Authmiddleware,async(req,res)=>{
         await stageactions.completeaction(currentaction)
         await stageactions.startaction(nextaction)
         const tracker=new tracking(billId,user._id,stageId)
-        tracker.audit(versionId,`Clerk forwarded draft to speaker with comment`)
+        tracker.audit(versionId,`Clerk forwarded draft to speaker with `)
         const clerkQuery = `
                 SELECT _id
                 FROM app.profile
@@ -207,11 +234,11 @@ router.post('/forwarddraft',Authmiddleware,async(req,res)=>{
         console.log('billdata..',billdata)
                 
         if (clerkResult.rows.length > 0) {
-            const clerkId = clerkResult.rows[0]._id
+            const speakerId = clerkResult.rows[0]._id
            await notif(
-            null,
-            clerkId,
-            `${billdata.title} Draft has been approved, My comment about the bill is`
+            user._id,
+            speakerId,
+            `Review the ${billdata.title} Draft, My comment about the draft is ${comment}`
             )}
         
         const stagedata=await Fetch.stages(billId)
